@@ -18,7 +18,6 @@ async function askGpt4oMini(prompt) {
       }
     );
 
-    // Проверка статуса ответа
     if (response.status !== 200) {
       throw new Error(`API вернул статус ${response.status}`);
     }
@@ -35,46 +34,48 @@ exports.handler = async (event) => {
   try {
     console.log('Raw input:', event.body); // Логирование сырых данных
 
-    // Проверка наличия тела запроса
     if (!event.body) {
       console.error('Пустое тело запроса');
       return { statusCode: 400 };
     }
 
     const requestBody = JSON.parse(event.body);
-    
-    // Проверка структуры запроса
-    if (!requestBody.message) {
-      console.error('Неверная структура запроса:', requestBody);
-      return { statusCode: 400 };
-    }
+    const { message, my_chat_member } = requestBody;
 
-    const { message } = requestBody;
-    const chatId = message.chat.id;
+    if (message) {
+      const chatId = message.chat.id;
 
-    // Обработка команды /start
-    if (message.text === '/start') {
+      // Обработка команды /start
+      if (message.text === '/start') {
+        await axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+          chat_id: chatId,
+          text: 'Добро пожаловать в Breakout AI! Что-то нужно? 🚀 '
+        });
+        return { statusCode: 200 };
+      }
+
+      // Проверка наличия текста сообщения
+      if (!message.text) {
+        console.log('Сообщение без текста:', message);
+        return { statusCode: 200 }; // Игнорирование
+      }
+
+      // Основная логика
+      const botResponse = await askGpt4oMini(message.text);
+
       await axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
         chat_id: chatId,
-        text: 'Добро пожаловать! Я работаю на Netlify 🚀 Задайте ваш вопрос:'
+        text: botResponse,
+        parse_mode: "Markdown"
       });
-      return { statusCode: 200 };
-    }
 
-    // Проверка наличия текста сообщения
-    if (!message.text) {
-      console.log('Сообщение без текста:', message);
-      return { statusCode: 200 }; // Игнорирование
+    } else if (my_chat_member) {
+      // Обработка обновлений типа my_chat_member
+      console.log('Обновление my_chat_member:', my_chat_member);
+      // Здесь можно добавить дополнительную логику обработки, если необходимо
+    } else {
+      console.error('Неподдерживаемый тип обновления:', requestBody);
     }
-
-    // Основная логика
-    const botResponse = await askGpt4oMini(message.text);
-    
-    await axios.post(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
-      chat_id: chatId,
-      text: botResponse,
-      parse_mode: "Markdown"
-    });
 
     return { statusCode: 200 };
   } catch (error) {
