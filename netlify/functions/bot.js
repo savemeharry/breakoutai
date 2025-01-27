@@ -7,7 +7,10 @@ async function askGpt4oMini(prompt) {
       'https://api.openai.com/v1/chat/completions', // URL API GPT-4o Mini
       {
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+           { role: "system", content: "Ты — помощник, который предоставляет подробные и точные ответы на вопросы пользователей." },
+           { role: "user", content: prompt }
+        ],
         temperature: 0.5
       },
       {
