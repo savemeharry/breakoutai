@@ -8,7 +8,7 @@ async function askGpt4oMini(prompt) {
       {
         model: "gpt-4o-mini",
         messages: [
-           { role: "system", content: "Ты — помощник, который предоставляет подробные и точные ответы на вопросы пользователей." },
+           { role: "system", content: "Ты — помощник и тебя зовут Breakout AI, который предоставляет подробные и точные ответы на вопросы пользователей." },
            { role: "user", content: prompt }
         ],
         temperature: 0.5
